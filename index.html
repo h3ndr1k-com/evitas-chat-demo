@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat with Jordan Ellis</title>
+  <title>Chat</title>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; background: #f5f6f8; color: #1a1a1a; min-height: 100vh; }
     .wrap { max-width: 520px; margin: 48px auto; padding: 0 20px; text-align: center; }
@@ -13,17 +13,35 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Chat with Jordan Ellis&rsquo;s assistant</h1>
+    <h1 id="heading">Chat</h1>
     <p>The chat should open on its own. If not, tap <strong>Chat now</strong> at the bottom right.</p>
   </div>
   <script>
     (function () {
-      var params = new URLSearchParams(window.location.search);
-      var leadId = params.get('lead_id') || '';
+      // Support query params and hash params (hash is used when hosted via htmlpreview).
+      var query = new URLSearchParams(window.location.search || '');
+      var hash = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''));
+      function getParam(key) {
+        return query.get(key) || hash.get(key) || '';
+      }
+
+      var leadId = getParam('lead_id');
+      var leadName = getParam('name');
+      var leadEmail = getParam('email');
+      var leadPhone = getParam('phone');
+      var realtorName = getParam('realtor_name') || 'your agent';
+      var realtorFirst = realtorName.split(/\s+/)[0] || 'Agent';
+      var title = 'Chat with ' + realtorName;
+      var botName = realtorFirst + "'s assistant";
+
+      document.title = title;
+      var heading = document.getElementById('heading');
+      if (heading) heading.textContent = 'Chat with ' + realtorName + "'s assistant";
+
       var marker = 'evitas_retell_lead';
       var prev = '';
       try { prev = localStorage.getItem(marker) || ''; } catch (e) {}
-      var forceFresh = params.get('fresh') === '1' || (leadId && leadId !== prev);
+      var forceFresh = getParam('fresh') === '1' || !leadId || leadId !== prev;
       if (forceFresh) {
         try {
           Object.keys(localStorage).forEach(function (k) {
@@ -35,22 +53,24 @@
           if (leadId) localStorage.setItem(marker, leadId);
         } catch (e) {}
       }
+
       var dynamic = {
-        lead_name: params.get('name') || '',
-        lead_email: params.get('email') || '',
-        lead_phone: params.get('phone') || '',
+        lead_name: leadName,
+        lead_email: leadEmail,
+        lead_phone: leadPhone,
         lead_id: leadId,
-        realtor_name: 'Jordan Ellis',
+        realtor_name: realtorName,
         session_key: leadId || ('anon-' + Date.now())
       };
+
       var s = document.createElement('script');
       s.id = 'retell-widget';
       s.type = 'module';
       s.src = 'https://dashboard.retellai.com/retell-widget-v2.js';
       s.setAttribute('data-public-key', 'public_key_602a204fa4cf834356875');
       s.setAttribute('data-agent-id', 'agent_8ee04c16d8d8378dd3c9c5428b');
-      s.setAttribute('data-title', 'Chat with Jordan Ellis');
-      s.setAttribute('data-bot-name', "Jordan's assistant");
+      s.setAttribute('data-title', title);
+      s.setAttribute('data-bot-name', botName);
       s.setAttribute('data-fab-text', 'Chat now');
       s.setAttribute('data-auto-open', 'true');
       s.setAttribute('data-show-ai-popup', 'false');
